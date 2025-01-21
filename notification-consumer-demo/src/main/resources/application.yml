@@ -1,0 +1,45 @@
+# Server configuration
+server:
+  url: http://localhost:8080
+  port: 8080
+# Spring
+spring:
+  # Application
+  application.name: ens-notification-consumer-demo
+  # Cache
+  cache.type: none
+  # Kafka
+  kafka:
+    streams:
+      application-id: ens-notification-consumer-demo
+      state-dir: /tmp/kafka-streams
+    consumer:
+      bootstrap-servers: localhost:9092
+      notification:
+        group-id: ens-notification
+        topic: ens_notification
+        # earliest pour tout relire, latest pour lire seulement les nouveaux messsages
+        auto-offset-reset: earliest
+        dlt: ens_notification_dlt
+        window-minutes: 5
+        grace-minutes: 3
+    producer:
+      notification:
+        topic-immediate: ens_notification_queue_immediate
+        topic-deffered: ens_notification_queue_deffered
+  # Threads
+  threads:
+    virtual:
+      enabled: true
+
+# Logging configuration
+logging:
+  level:
+    root: INFO
+    fr.vvlabs: INFO
+    org.springframework: INFO
+    org.springframework.cache: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
+    org.keycloak: DEBUG
+    com.github.benmanes.caffeine: DEBUG

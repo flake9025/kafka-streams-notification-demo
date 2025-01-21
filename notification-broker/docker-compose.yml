@@ -1,0 +1,60 @@
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.5
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  broker1:
+    image: confluentinc/cp-server:7.4.5
+    container_name: broker1
+    ports:
+      - "9092:9092"
+      - "9090:9090"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker1:9090,EXTERNAL://host.docker.internal:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9090,EXTERNAL://0.0.0.0:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      # Configuration des facteurs de réplication
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+      KAFKA_MIN_INSYNC_REPLICAS: 1
+      # Configuration des topics Confluent Platform
+      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CONFLUENT_SCHEMA_REGISTRY_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CONFLUENT_METADATA_TOPIC_REPLICATION_FACTOR: 1
+      # Désactivation complète des métriques et de la télémétrie
+      KAFKA_METRIC_REPORTERS: ""
+      KAFKA_CONFLUENT_TELEMETRY_ENABLED: "false"
+      KAFKA_CONFLUENT_REPORTERS_TELEMETRY_AUTO_ENABLE: "false"
+      KAFKA_CONFLUENT_METRICS_ENABLE: "false"
+      KAFKA_CONFLUENT_SUPPORT_METRICS_ENABLE: "false"
+      KAFKA_CONFLUENT_TELEMETRY_PREFIX: ""
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - zookeeper
+
+  akhq:
+    image: tchiotludo/akhq
+    container_name: akhq
+    ports:
+      - "8083:8080"
+    environment:
+      AKHQ_CONFIGURATION: |
+        akhq:
+          connections:
+            local:
+              properties:
+                bootstrap.servers: broker1:9090
+    depends_on:
+      - broker1
